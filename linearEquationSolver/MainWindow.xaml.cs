@@ -23,7 +23,7 @@ namespace linearEquationSolver
 
     public partial class MainWindow : Window
     {
-        //-2x -245+24x+6 =1 +24x-24
+        //(2-x)*3 = 4
         List<string> leftSide = new List<string>();
         List<string> rightSide = new List<string>();
         List<string> listOfXFromLeftSide = new List<string>();
@@ -38,10 +38,10 @@ namespace linearEquationSolver
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-        
-           
 
-         
+
+
+
             //char[] operationArray = { '+', '-', '/', '*' };
             //string[] numberArray = Regex.Split(equationTextBox.Text, @"(?<=[x=])");
             var result = Regex.Matches(equationTextBox.Text, @"\d+(?:[,.]\d+)*(?:e[-+]?\d+)?|[-^+*/()=]|\w+", RegexOptions.IgnoreCase)
@@ -51,9 +51,9 @@ namespace linearEquationSolver
 
             for (int i = 0; i < result.Count; i++)
             {
-                if(result[i] == "x" && i>0 && (result[i-1] == "+" || result[i - 1] == "-"))
+                if (result[i] == "x" && i > 0 && (result[i - 1] == "+" || result[i - 1] == "-"))
                 {
-                    result.Insert(i, "1");                    
+                    result.Insert(i, "1");
                 }
 
             }
@@ -66,8 +66,8 @@ namespace linearEquationSolver
                 }
                 if (equationCheckMark)
                 {
-                 
-                 
+
+
                     rightSide.Add(number);
 
                 }
@@ -79,15 +79,17 @@ namespace linearEquationSolver
 
             rightSide.RemoveAt(0);
 
-            separateXFromNumbers(ref leftSide, ref listOfXFromLeftSide);
-            separateXFromNumbers(ref rightSide, ref listOfXFromRightSide);
+            bracketMultiplyer(ref leftSide);
+            bracketMultiplyer(ref rightSide);
+            separateUnknownFromNumbers(ref leftSide, ref listOfXFromLeftSide);
+            separateUnknownFromNumbers(ref rightSide, ref listOfXFromRightSide);
             checkIfListStartsWithPlus(ref leftSide);
             checkIfListStartsWithPlus(ref rightSide);
             checkIfListStartsWithPlus(ref listOfXFromLeftSide);
             checkIfListStartsWithPlus(ref listOfXFromRightSide);
 
 
-            string concatLeft = String.Join(null,leftSide);
+            string concatLeft = String.Join(null, leftSide);
             string concatLeftX = String.Join(null, listOfXFromLeftSide);
             string concatRight = String.Join(null, rightSide);
             string concatRightX = String.Join(null, listOfXFromRightSide);
@@ -111,12 +113,12 @@ namespace linearEquationSolver
             if (listOfXFromRightSide.Any())
             {
                 totalRightX = new NCalc.Expression(concatRightX).Evaluate();
-              
+
             }
-      
+
             var sumOfX = Convert.ToDouble(totalLeftX) - Convert.ToDouble(totalRightX);
             var sumOfNumbers = Convert.ToDouble(totalRight) - Convert.ToDouble(totalLeft);
-            
+
             MessageBox.Show("X = " + (sumOfNumbers / sumOfX));
             leftSide.Clear();
             rightSide.Clear();
@@ -127,14 +129,15 @@ namespace linearEquationSolver
 
 
         }
-        static void separateXFromNumbers(ref List<string> inputList,ref List<string> listForX)
+        static void separateUnknownFromNumbers(ref List<string> inputList, ref List<string> listForX)
         {
+
             for (int i = 0; i < inputList.Count; i++)
             {
-              
+
                 if (inputList[i] == "x")
                 {
-             
+
                     if (i == 0)
                     {
                         listForX.Add("1");
@@ -149,7 +152,7 @@ namespace linearEquationSolver
                         //}
                         //else
                         //{
-                            listForX.Add(inputList[i - 1]);
+                        listForX.Add(inputList[i - 1]);
                         //}
                     }
                     if (i > 1)
@@ -198,6 +201,79 @@ namespace linearEquationSolver
             }
         }
 
+        static void bracketMultiplyer(ref List<string> inputList)
+        {
+            double placeholder = 1;
+            double multiplyer = 1;
+            for (int i = 0; i < inputList.Count; i++) // looking for multiplyer value after ()
+            {
+                if (inputList[i] == ")")
+                {
 
+                    if (i + 1 < inputList.Count)
+                    {
+                        if (double.TryParse(inputList[i + 1], out placeholder))
+                        {
+                            multiplyer = placeholder;
+                            inputList.RemoveAt(i + 1);
+                        }
+                    }
+                    if (i + 2 < inputList.Count && inputList[i + 1] == "*")
+                    {
+                        if (double.TryParse(inputList[i + 2], out placeholder))
+                        {
+                            multiplyer = placeholder;
+                            inputList.RemoveAt(i + 1);
+                            inputList.RemoveAt(i + 1);
+                        }
+                    }
+                }
+
+            }
+            for (int i = 0; i < inputList.Count; i++) // looking for multiplyer value before ()
+            {
+                if (inputList[i] == "(")
+                {
+
+                    if (i - 1 >= 0)
+                    {
+                        if (double.TryParse(inputList[i - 1], out placeholder))
+                        {
+                            multiplyer = placeholder;
+                            inputList.RemoveAt(i - 1);
+                        }
+                    }
+                    if (i - 2 >= 0 && inputList[i - 1] == "*")
+                    {
+                        if (double.TryParse(inputList[i - 2], out placeholder))
+                        {
+                            multiplyer = placeholder;
+                            inputList.RemoveAt(i - 1);
+                            inputList.RemoveAt(i - 2);
+                        }
+                    }
+                }
+            }
+            
+                multiyplyingExpressions(inputList, multiplyer);
+        }
+
+        private static void multiyplyingExpressions(List<string> inputList, double multiplyer)
+        {
+            for (int i = 0; i < inputList.Count; i++)
+            {
+                if (inputList[i] == "(")
+                {
+                    while (inputList[i + 2] != ")")
+                    {
+                        if (inputList[i + 1].All(char.IsDigit))
+                        {
+                            inputList[i + 1] = (double.Parse(inputList[i + 1]) * multiplyer).ToString();
+                        }
+                        i++;
+                    }
+                }
+            }
+        }
     }
 }
