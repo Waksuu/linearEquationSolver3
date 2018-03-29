@@ -23,7 +23,7 @@ namespace linearEquationSolver
 
     public partial class MainWindow : Window
     {
-        //(2-x)*3 = 4
+        //(3-2*4*x-4)=4
         List<string> leftSide = new List<string>();
         List<string> rightSide = new List<string>();
         List<string> listOfXFromLeftSide = new List<string>();
@@ -44,18 +44,30 @@ namespace linearEquationSolver
 
             //char[] operationArray = { '+', '-', '/', '*' };
             //string[] numberArray = Regex.Split(equationTextBox.Text, @"(?<=[x=])");
-            var result = Regex.Matches(equationTextBox.Text, @"\d+(?:[,.]\d+)*(?:e[-+]?\d+)?|[-^+*/()=]|\w+", RegexOptions.IgnoreCase)
+            var result = Regex.Matches(equationTextBox.Text, @"\d+(?:[,.]\d+)*(?:e[-+]?\d+)?|[-^+/*()=]|\w+", RegexOptions.IgnoreCase)
              .Cast<Match>()
              .Select(p => p.Value)
              .ToList();
 
-            for (int i = 0; i < result.Count; i++)
+            for (int i = 0; i < result.Count; i++)  // normalization, x => 1x;
             {
-                if (result[i] == "x" && i > 0 && (result[i - 1] == "+" || result[i - 1] == "-"))
+                if (result[i] == "x" && i > 0 && !(result[i - 1].All(char.IsDigit)))
                 {
                     result.Insert(i, "1");
                 }
 
+            }
+            for (int i = 0; i < result.Count; i++)// normalization for * sign: 2x => 2*x; )( => )*(; etc...
+            {
+                if (i+1 < result.Count && 
+                    (result[i] == ")" && result[i + 1].All(char.IsDigit) ||
+                    result[i].All(char.IsDigit)  && result[i+1] == "(" ||
+                    result[i] == ")" && result[i + 1] == "(" || 
+                    result[i].All(char.IsDigit) && result[i+1] == "x"))
+                {
+                    result.Insert(i+1, "*"); 
+                    i++;
+                }
             }
 
             foreach (var number in result) // separating left side of equation from right side
@@ -131,80 +143,126 @@ namespace linearEquationSolver
         }
         static void separateUnknownFromNumbers(ref List<string> inputList, ref List<string> listForX)
         {
+            multiplyNormalization(inputList);
 
             for (int i = 0; i < inputList.Count; i++)
             {
-
                 if (inputList[i] == "x")
                 {
 
-                    if (i == 0)
-                    {
-                        listForX.Add("1");
-
-                    }
+               
                     if (i == 1)
                     {
-                        //if (inputList[i - 1] == "-")
-                        //{
-                        //    listForX.Add("-");
-                        //    listForX.Add("1");
-                        //}
-                        //else
-                        //{
                         listForX.Add(inputList[i - 1]);
-                        //}
+                       
                     }
-                    if (i > 1)
-                    {
-                        listForX.Add(inputList[i - 2]);
-                        listForX.Add(inputList[i - 1]);
+                
 
+                        if (i > 1)
+                        {
+                            if (inputList[i - 2] == "-" || inputList[i - 2] == "+")
+                            {
+                                listForX.Add(inputList[i - 2]); 
+                            }
+                        listForX.Add(inputList[i - 1]);
+                        }
+                        
+
+
+
+                    
+                }
+            }
+            deleteFromInputList(inputList);
+
+        }
+
+        private static void multiplyNormalization(List<string> inputList)
+        {
+            for (int i = 0; i < inputList.Count; i++)
+            {
+                if (inputList[i] == "*" && i > 0)
+                {
+                    if (inputList[i - 1].All(char.IsDigit) && inputList[i + 1].All(char.IsDigit))
+                    {
+                        inputList[i - 1] = (double.Parse(inputList[i - 1]) * double.Parse(inputList[i + 1])).ToString();
+                        inputList.RemoveAt(i);
+                        inputList.RemoveAt(i);
+                        i--;
+                    }
+                    if (inputList[i - 1].All(char.IsDigit) && inputList[i + 1] == "x")
+                    {
+                        inputList.RemoveAt(i);
+                        i--;
                     }
                 }
             }
+        }
+
+        private static void deleteFromInputList(List<string> inputList)
+        {
             for (int i = inputList.Count - 1; i >= 0; i--)
             {
                 if (inputList[i] == "x")
-                {
-                    if (i == 0)
-                    {
-                        inputList.RemoveAt(i);
-                    }
+                {             
                     if (i == 1)
                     {
                         inputList.RemoveAt(i);
-                        inputList.RemoveAt(i - 1);
                         --i;
+                        inputList.RemoveAt(i);
+                        continue;
 
                     }
-                    if (i > 1)
-                    {
-                        inputList.RemoveAt(i);
-                        inputList.RemoveAt(i - 1);
-                        inputList.RemoveAt(i - 2);
-                        --i;
-                        --i;
-                    }
+                   
+                        if (i > 1)
+                        {
+                            if (inputList[i - 2] == "-" || inputList[i - 2] == "+")
+                            {
+                                inputList.RemoveAt(i - 2);
+                                i--;
+                            }
+                        }
+                    inputList.RemoveAt(i);
+                    i--;
+                    inputList.RemoveAt(i);                     
+                        
+                    
                 }
             }
-
         }
+
         static void checkIfListStartsWithPlus(ref List<string> inputList)
         {
             if (inputList.Any())
             {
-                if (inputList[0] == "+")
+                for (int i = 0; i < inputList.Count; i++)
                 {
-                    inputList.RemoveAt(0);
+                    if (i > 1)
+                    {
+                        if (inputList[i].All(char.IsDigit) && inputList[i - 1] == "+" && !inputList[i - 2].All(char.IsDigit))
+                        {
+                            inputList.RemoveAt(i - 1);
+                        }
+                    }
+                    if(i==0)
+                    {
+                        if(inputList[i] == "+")
+                        {
+                            inputList.RemoveAt(i);
+                        }
+                    }
                 }
+
             }
         }
 
         static void bracketMultiplyer(ref List<string> inputList)
         {
-            double placeholder = 1;
-            double multiplyer = 1;
+            double placeholderRight = 1;
+            double multiplyerRight = 1;
+
+            double placeholderLeft = 1;
+            double multiplyerLeft = 1;
             for (int i = 0; i < inputList.Count; i++) // looking for multiplyer value after ()
             {
                 if (inputList[i] == ")")
@@ -212,17 +270,17 @@ namespace linearEquationSolver
 
                     if (i + 1 < inputList.Count)
                     {
-                        if (double.TryParse(inputList[i + 1], out placeholder))
+                        if (double.TryParse(inputList[i + 1], out placeholderRight))
                         {
-                            multiplyer = placeholder;
+                            multiplyerRight = placeholderRight;
                             inputList.RemoveAt(i + 1);
                         }
                     }
                     if (i + 2 < inputList.Count && inputList[i + 1] == "*")
                     {
-                        if (double.TryParse(inputList[i + 2], out placeholder))
+                        if (double.TryParse(inputList[i + 2], out placeholderRight))
                         {
-                            multiplyer = placeholder;
+                            multiplyerRight = placeholderRight;
                             inputList.RemoveAt(i + 1);
                             inputList.RemoveAt(i + 1);
                         }
@@ -237,17 +295,17 @@ namespace linearEquationSolver
 
                     if (i - 1 >= 0)
                     {
-                        if (double.TryParse(inputList[i - 1], out placeholder))
+                        if (double.TryParse(inputList[i - 1], out placeholderLeft))
                         {
-                            multiplyer = placeholder;
+                            multiplyerLeft = placeholderLeft;
                             inputList.RemoveAt(i - 1);
                         }
                     }
                     if (i - 2 >= 0 && inputList[i - 1] == "*")
                     {
-                        if (double.TryParse(inputList[i - 2], out placeholder))
+                        if (double.TryParse(inputList[i - 2], out placeholderLeft))
                         {
-                            multiplyer = placeholder;
+                            multiplyerLeft = placeholderLeft;
                             inputList.RemoveAt(i - 1);
                             inputList.RemoveAt(i - 2);
                         }
@@ -255,20 +313,21 @@ namespace linearEquationSolver
                 }
             }
             
-                multiyplyingExpressions(inputList, multiplyer);
+                multiyplyingExpressions(inputList, multiplyerLeft, multiplyerRight);
         }
 
-        private static void multiyplyingExpressions(List<string> inputList, double multiplyer)
+        private static void multiyplyingExpressions(List<string> inputList, double multiplyerLeft, double multiplyerRight)
         {
             for (int i = 0; i < inputList.Count; i++)
             {
                 if (inputList[i] == "(")
                 {
-                    while (inputList[i + 2] != ")")
+                    while (inputList[i] != ")")
                     {
-                        if (inputList[i + 1].All(char.IsDigit))
+                        if (inputList[i].All(char.IsDigit))
                         {
-                            inputList[i + 1] = (double.Parse(inputList[i + 1]) * multiplyer).ToString();
+                            inputList[i] = (double.Parse(inputList[i]) * multiplyerLeft * multiplyerRight).ToString();
+                           
                         }
                         i++;
                     }

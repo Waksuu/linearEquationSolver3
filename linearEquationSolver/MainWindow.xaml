@@ -12,7 +12,7 @@
             <ColumnDefinition Width="67*"/>
         </Grid.ColumnDefinitions>
         <Label Content="Equation" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
-        <TextBox HorizontalAlignment="Left" Height="25" x:Name="equationTextBox" Text="3*(2-x) = 4"
+        <TextBox HorizontalAlignment="Left" Height="25" x:Name="equationTextBox" Text="2*((2x+1)+(2-x))=4"
                  Padding="2,2,0,0" Margin="75,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2"/>
         <Button Content="Button" HorizontalAlignment="Left" Margin="41.933,10,0,0" VerticalAlignment="Top" Width="75" Height="25" Grid.Column="1" Click="Button_Click"/>
 
