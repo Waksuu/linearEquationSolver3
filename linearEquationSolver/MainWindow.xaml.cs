@@ -23,7 +23,7 @@ namespace linearEquationSolver
 
     public partial class MainWindow : Window
     {
-        //(3-2*4*x-4)=4
+        //2x/2 = 4
         List<string> leftSide = new List<string>();
         List<string> rightSide = new List<string>();
         List<string> listOfXFromLeftSide = new List<string>();
@@ -91,10 +91,9 @@ namespace linearEquationSolver
 
             rightSide.RemoveAt(0);
 
-            bracketMultiplyer(ref leftSide);
-            bracketMultiplyer(ref rightSide);
-            separateUnknownFromNumbers(ref leftSide, ref listOfXFromLeftSide);
-            separateUnknownFromNumbers(ref rightSide, ref listOfXFromRightSide);
+               
+            calculate(ref leftSide, ref listOfXFromLeftSide);
+            calculate(ref rightSide, ref listOfXFromRightSide);
             checkIfListStartsWithPlus(ref leftSide);
             checkIfListStartsWithPlus(ref rightSide);
             checkIfListStartsWithPlus(ref listOfXFromLeftSide);
@@ -141,10 +140,11 @@ namespace linearEquationSolver
 
 
         }
-        static void separateUnknownFromNumbers(ref List<string> inputList, ref List<string> listForX)
+        static void calculate(ref List<string> inputList, ref List<string> listForX)
         {
             multiplyNormalization(inputList);
-
+            bracketDivider(inputList);
+            bracketMultiplyer(inputList);
             for (int i = 0; i < inputList.Count; i++)
             {
                 if (inputList[i] == "x")
@@ -176,6 +176,8 @@ namespace linearEquationSolver
             deleteFromInputList(inputList);
 
         }
+
+
 
         private static void multiplyNormalization(List<string> inputList)
         {
@@ -256,7 +258,7 @@ namespace linearEquationSolver
             }
         }
 
-        static void bracketMultiplyer(ref List<string> inputList)
+        static void bracketMultiplyer(List<string> inputList)
         {
             double placeholderRight = 1;
             double multiplyerRight = 1;
@@ -334,5 +336,95 @@ namespace linearEquationSolver
                 }
             }
         }
+        private static void bracketDivider(List<string> inputList)
+        {
+            //(2x+2)/2=4
+            for (int i = 0; i < inputList.Count; i++)
+            {
+                if (inputList[i] == "x" && inputList[i + 1] == "/")
+                {
+                    inputList[i - 1] = (double.Parse(inputList[i - 1]) / double.Parse(inputList[i + 2])).ToString();
+                    inputList.RemoveAt(i + 1);
+                    inputList.RemoveAt(i + 1);
+                }
+            }
+            double placeholderRight = 1;
+            double dividerRight = 1;
+
+            double placeholderLeft = 1;
+            double dividerLeft = 1;
+            for (int i = 0; i < inputList.Count; i++) // looking for multiplyer value after ()
+            {
+                if (inputList[i] == ")")
+                {
+
+                    if (i + 1 < inputList.Count)
+                    {
+                        if (double.TryParse(inputList[i + 1], out placeholderRight))
+                        {
+                            dividerRight = placeholderRight;
+                            inputList.RemoveAt(i + 1);
+                        }
+                    }
+                    if (i + 2 < inputList.Count && inputList[i + 1] == "/")
+                    {
+                        if (double.TryParse(inputList[i + 2], out placeholderRight))
+                        {
+                            dividerRight = placeholderRight;
+                            inputList.RemoveAt(i + 1);
+                            inputList.RemoveAt(i + 1);
+                        }
+                    }
+                }
+
+
+            }
+            for (int i = 0; i < inputList.Count; i++) // looking for multiplyer value before ()
+            {
+                if (inputList[i] == "(")
+                {
+
+                    if (i - 1 >= 0)
+                    {
+                        if (double.TryParse(inputList[i - 1], out placeholderLeft))
+                        {
+                            dividerLeft = placeholderLeft;
+                            inputList.RemoveAt(i - 1);
+                        }
+                    }
+                    if (i - 2 >= 0 && inputList[i - 1] == "/")
+                    {
+                        if (double.TryParse(inputList[i - 2], out placeholderLeft))
+                        {
+                            dividerLeft = placeholderLeft;
+                            inputList.RemoveAt(i - 1);
+                            inputList.RemoveAt(i - 2);
+                        }
+                    }
+                }
+            }
+
+            dividingExpressions(inputList, dividerLeft, dividerRight);
+        }
+        private static void dividingExpressions(List<string> inputList, double dividerLeft, double dividerRight)
+        {
+            for (int i = 0; i < inputList.Count; i++)
+            {
+                if (inputList[i] == "(")
+                {
+                    while (inputList[i] != ")")
+                    {
+                        if (inputList[i].All(char.IsDigit))
+                        {
+                            inputList[i] = (double.Parse(inputList[i]) / dividerLeft / dividerRight).ToString();
+
+                        }
+                        i++;
+                    }
+                }
+            }
+            
+        }
+
     }
 }
