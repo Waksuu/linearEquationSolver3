@@ -94,10 +94,10 @@ namespace linearEquationSolver
                
             calculate(ref leftSide, ref listOfXFromLeftSide);
             calculate(ref rightSide, ref listOfXFromRightSide);
-            checkIfListStartsWithPlus(ref leftSide);
-            checkIfListStartsWithPlus(ref rightSide);
-            checkIfListStartsWithPlus(ref listOfXFromLeftSide);
-            checkIfListStartsWithPlus(ref listOfXFromRightSide);
+            trimIfEquationStartsWithSign(ref leftSide);
+            trimIfEquationStartsWithSign(ref rightSide);
+            trimIfEquationStartsWithSign(ref listOfXFromLeftSide);
+            trimIfEquationStartsWithSign(ref listOfXFromRightSide);
 
 
             string concatLeft = String.Join(null, leftSide);
@@ -192,10 +192,24 @@ namespace linearEquationSolver
                         inputList.RemoveAt(i);
                         i--;
                     }
-                    if (inputList[i - 1].All(char.IsDigit) && inputList[i + 1] == "x")
+               
+                    if (i!=0)
                     {
-                        inputList.RemoveAt(i);
-                        i--;
+                        if (inputList[i - 1].All(char.IsDigit) && inputList[i + 1] == "x")
+                        {
+                            inputList.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                    if(inputList[i] == "*" && i > 1)
+                    {
+                        if (inputList[i - 2].All(char.IsDigit) && inputList[i + 1].All(char.IsDigit))
+                        {
+                            inputList[i - 2] = (double.Parse(inputList[i - 2]) * double.Parse(inputList[i + 1])).ToString();
+                            inputList.RemoveAt(i);
+                            inputList.RemoveAt(i);
+                            i--;
+                        }
                     }
                 }
             }
@@ -233,7 +247,7 @@ namespace linearEquationSolver
             }
         }
 
-        static void checkIfListStartsWithPlus(ref List<string> inputList)
+        static void trimIfEquationStartsWithSign(ref List<string> inputList)
         {
             if (inputList.Any())
             {
@@ -241,14 +255,14 @@ namespace linearEquationSolver
                 {
                     if (i > 1)
                     {
-                        if (inputList[i].All(char.IsDigit) && inputList[i - 1] == "+" && !inputList[i - 2].All(char.IsDigit))
+                        if (inputList[i].All(char.IsDigit) && inputList[i - 1] == "+" && !inputList[i - 2].All(char.IsDigit) || inputList[i].All(char.IsDigit) && inputList[i - 1] == "*" && !inputList[i - 2].All(char.IsDigit) || inputList[i].All(char.IsDigit) && inputList[i - 1] == "/" && !inputList[i - 2].All(char.IsDigit)) // i know this is bad
                         {
                             inputList.RemoveAt(i - 1);
                         }
                     }
                     if(i==0)
                     {
-                        if(inputList[i] == "+")
+                        if(inputList[i] == "+" || inputList[i] == "*" || inputList[i] == "/")
                         {
                             inputList.RemoveAt(i);
                         }
@@ -341,12 +355,16 @@ namespace linearEquationSolver
             //(2x+2)/2=4
             for (int i = 0; i < inputList.Count; i++)
             {
-                if (inputList[i] == "x" && inputList[i + 1] == "/")
+                if (i < (inputList.Count - 1))
                 {
-                    inputList[i - 1] = (double.Parse(inputList[i - 1]) / double.Parse(inputList[i + 2])).ToString();
-                    inputList.RemoveAt(i + 1);
-                    inputList.RemoveAt(i + 1);
+                    if (inputList[i] == "x" && inputList[i + 1] == "/" )
+                    {
+                        inputList[i - 1] = (double.Parse(inputList[i - 1]) / double.Parse(inputList[i + 2])).ToString();
+                        inputList.RemoveAt(i + 1);
+                        inputList.RemoveAt(i + 1);
+                    }
                 }
+                
             }
             double placeholderRight = 1;
             double dividerRight = 1;
