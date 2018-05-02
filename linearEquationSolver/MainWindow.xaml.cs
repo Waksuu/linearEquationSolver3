@@ -59,13 +59,13 @@ namespace linearEquationSolver
             }
             for (int i = 0; i < result.Count; i++)// normalization for * sign: 2x => 2*x; )( => )*(; etc...
             {
-                if (i+1 < result.Count && 
+                if (i + 1 < result.Count &&
                     (result[i] == ")" && result[i + 1].All(char.IsDigit) ||
-                    result[i].All(char.IsDigit)  && result[i+1] == "(" ||
-                    result[i] == ")" && result[i + 1] == "(" || 
-                    result[i].All(char.IsDigit) && result[i+1] == "x"))
+                    result[i].All(char.IsDigit) && result[i + 1] == "(" ||
+                    result[i] == ")" && result[i + 1] == "(" ||
+                    result[i].All(char.IsDigit) && result[i + 1] == "x"))
                 {
-                    result.Insert(i+1, "*"); 
+                    result.Insert(i + 1, "*");
                     i++;
                 }
             }
@@ -91,7 +91,7 @@ namespace linearEquationSolver
 
             rightSide.RemoveAt(0);
 
-               
+
             calculate(ref leftSide, ref listOfXFromLeftSide);
             calculate(ref rightSide, ref listOfXFromRightSide);
             trimIfEquationStartsWithSign(ref leftSide);
@@ -104,10 +104,15 @@ namespace linearEquationSolver
             string concatLeftX = String.Join(null, listOfXFromLeftSide);
             string concatRight = String.Join(null, rightSide);
             string concatRightX = String.Join(null, listOfXFromRightSide);
-            dynamic totalLeft = 0;
-            dynamic totalLeftX = 0;
-            dynamic totalRight = 0;
-            dynamic totalRightX = 0;
+            object totalLeft = 0;
+            object totalLeftX = 0;
+            object totalRight = 0;
+            object totalRightX = 0;
+
+            replaceComma(ref concatLeft);
+            replaceComma(ref concatLeftX);
+            replaceComma(ref concatRight);
+            replaceComma(ref concatRightX);
 
             if (leftSide.Any())
             {
@@ -140,6 +145,12 @@ namespace linearEquationSolver
 
 
         }
+
+        private static void replaceComma(ref string ourString)
+        {
+            ourString = ourString.Replace(',', '.');
+        }
+
         static void calculate(ref List<string> inputList, ref List<string> listForX)
         {
             multiplyNormalization(inputList);
